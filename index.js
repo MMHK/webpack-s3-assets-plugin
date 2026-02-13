@@ -6,7 +6,7 @@ const {
   CompleteMultipartUploadCommand, 
   AbortMultipartUploadCommand 
 } = require('@aws-sdk/client-s3');
-const { NodeHttpHandler } = require('@aws-sdk/node-http-handler');
+const { NodeHttpHandler } = require('@smithy/node-http-handler');
 const pLimit = require('p-limit');
 const cliProgress = require('cli-progress');
 const mime = require('mime-types');
