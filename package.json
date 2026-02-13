@@ -7,7 +7,10 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint .",
-    "prepublishOnly": "npm test"
+    "version": "echo 'Version bump detected'",
+    "postversion": "git push && git push --tags",
+    "prerelease": "yarn lint && yarn test",
+    "release": "yarn version && echo 'Tag pushed, GitHub Actions will publish to npm'"
   },
   "keywords": [
     "webpack",
