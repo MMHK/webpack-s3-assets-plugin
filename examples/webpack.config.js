@@ -113,6 +113,7 @@ const dynamicFilterConfig = {
 };
 
 // Example 4: Multi-Environment Configuration
+// eslint-disable-next-line no-unused-vars
 const getConfig = (env) => {
   const isProduction = env === 'production';
   
@@ -148,8 +149,8 @@ const getConfig = (env) => {
   };
 };
 
-module.exports = process.env.ADVANCED 
-  ? advancedConfig 
+module.exports = process.env.ADVANCED
+  ? advancedConfig
   : process.env.DYNAMIC
-  ? dynamicFilterConfig
-  : basicConfig;
+    ? dynamicFilterConfig
+    : basicConfig;

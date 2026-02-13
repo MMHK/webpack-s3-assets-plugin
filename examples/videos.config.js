@@ -99,6 +99,7 @@ module.exports = {
  * Alternative: Skip videos and upload only small assets
  * Use this if videos should be uploaded separately via other means
  */
+// eslint-disable-next-line no-unused-vars
 const skipVideosConfig = {
   plugins: [
     new WebpackS3AssetsPlugin({

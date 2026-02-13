@@ -133,7 +133,7 @@ class WebpackS3AssetsPlugin {
     }
   }
 
-  async collectAndUploadAssets(compilation, assets, webpack) {
+  async collectAndUploadAssets(compilation, assets) {
     const files = this.getAssets(compilation, assets);
     
     if (files.length === 0) {
@@ -203,7 +203,7 @@ class WebpackS3AssetsPlugin {
     let lastUpdateTime = Date.now();
     let lastUpdateCount = 0;
 
-    const updateProgress = (fileName) => {
+    const updateProgress = () => {
       processedCount++;
       
       const now = Date.now();
@@ -239,7 +239,7 @@ class WebpackS3AssetsPlugin {
         } catch (error) {
           this.log(`Failed: ${file.name} - ${error.message}`);
         } finally {
-          updateProgress(file.name);
+          updateProgress();
         }
       })
     );
@@ -316,23 +316,20 @@ class WebpackS3AssetsPlugin {
     }
 
     // Simple retry loop for small files using PutObjectCommand
-    let lastError = null;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         this.log(`  📄 PutObjectCommand: ${file.name} (attempt ${attempt + 1})`);
-        
+
         const command = new PutObjectCommand(uploadParams);
         await withTimeout(
           this.s3Client.send(command),
           this.options.timeout,
           `PutObject timeout for ${file.name}`
         );
-        
+
         this.log(`  ✅ PutObjectCommand: ${file.name} completed`);
         return;
       } catch (error) {
-        lastError = error;
-        
         if (attempt === retries) {
           console.error(`  ❌ PutObjectCommand: ${file.name} failed after ${retries + 1} attempts: ${error.message}`);
           this.failedUploads.push({
@@ -370,7 +367,6 @@ class WebpackS3AssetsPlugin {
     console.log(`\n  🎬 Multipart Upload: ${file.name} (${this.formatBytes(file.size)})`);
 
     let uploadId = null;
-    let lastError = null;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
@@ -456,8 +452,6 @@ class WebpackS3AssetsPlugin {
         return;
         
       } catch (error) {
-        lastError = error;
-        
         // Abort multipart upload on error
         if (uploadId) {
           try {
