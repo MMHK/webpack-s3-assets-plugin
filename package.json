@@ -1,0 +1,51 @@
+{
+  "name": "webpack-s3-assets-plugin",
+  "version": "1.0.0",
+  "description": "Modern webpack plugin for uploading assets to S3 with concurrency control, rate limiting and progress bar",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint .",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "webpack",
+    "plugin",
+    "s3",
+    "upload",
+    "assets",
+    "aws",
+    "progress",
+    "concurrent"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "packageManager": "yarn@4.0.2",
+  "peerDependencies": {
+    "webpack": "^4.0.0 || ^5.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.450.0",
+    "@aws-sdk/node-http-handler": "^3.450.0",
+    "cli-progress": "^3.12.0",
+    "mime-types": "^2.1.35",
+    "p-limit": "^3.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "webpack": "^5.89.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/webpack-s3-assets-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/webpack-s3-assets-plugin/issues"
+  },
+  "homepage": "https://github.com/yourusername/webpack-s3-assets-plugin#readme"
+}
