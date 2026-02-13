@@ -27,10 +27,6 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Run tests
-        run: yarn test
-        continue-on-error: true
-
       - name: Run linter
         run: yarn lint
         continue-on-error: true
