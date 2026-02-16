@@ -36,28 +36,28 @@
 
 [1.7.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.7
 
-## [1.6.0] - 2026-02-16
+## [1.6.0] - 2026-02-13
 
 ### 移除
 - 移除测试相关内容
 
 [1.6.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.6
 
-## [1.5.0] - 2026-02-16
+## [1.5.0] - 2026-02-13
 
 ### 修復
 - 修復 ESLint 錯誤
 
 [1.5.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.5
 
-## [1.3.0] - 2026-02-16
+## [1.3.0] - 2026-02-13
 
 ### 修復
 - 修復 ESLint 錯誤
 
 [1.3.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.3
 
-## [1.2.0] - 2026-02-16
+## [1.2.0] - 2026-02-13
 
 ### 修復
 - 更新 `@aws-sdk/node-http-handler` 為 `@smithy/node-http-handler`
@@ -65,7 +65,7 @@
 
 [1.2.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.2
 
-## [1.1.0] - 2026-02-16
+## [1.1.0] - 2026-02-13
 
 ### 新增
 - 添加 GitHub Actions 自動發布配置
