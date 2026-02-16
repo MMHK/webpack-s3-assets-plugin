@@ -28,4 +28,49 @@
   - Issue #5561: Multipart 上傳卡住
   - Issue #7179: 大文件記憶體洩漏
 
+## [1.7.0] - 2026-02-16
+
+### 新增
+- 添加 `skipExistingFiles` 选项，支持基于 MD5 哈希的文件比对
+- 避免重复上传已存在的相同文件，提升上传效率
+
+[1.7.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.7
+
+## [1.6.0] - 2026-02-16
+
+### 移除
+- 移除测试相关内容
+
+[1.6.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.6
+
+## [1.5.0] - 2026-02-16
+
+### 修復
+- 修復 ESLint 錯誤
+
+[1.5.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.5
+
+## [1.3.0] - 2026-02-16
+
+### 修復
+- 修復 ESLint 錯誤
+
+[1.3.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.3
+
+## [1.2.0] - 2026-02-16
+
+### 修復
+- 更新 `@aws-sdk/node-http-handler` 為 `@smithy/node-http-handler`
+- 適配 AWS SDK v3 的最新依賴結構
+
+[1.2.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.2
+
+## [1.1.0] - 2026-02-16
+
+### 新增
+- 添加 GitHub Actions 自動發布配置
+- 實現 CI/CD 自動化流程
+
+[1.1.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.1
+
 [1.0.0]: https://github.com/yourusername/webpack-s3-assets-plugin/releases/tag/v1.0.0
