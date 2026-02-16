@@ -107,6 +107,24 @@ class WebpackS3AssetsPlugin {
     return crypto.createHash('md5').update(buffer).digest('hex');
   }
 
+  // Calculate S3 multipart ETag (md5-of-md5s)
+  getMultipartETag(buffer, partSize) {
+    const numParts = Math.ceil(buffer.length / partSize);
+    const md5s = [];
+    
+    for (let i = 0; i < numParts; i++) {
+      const start = i * partSize;
+      const end = Math.min(start + partSize, buffer.length);
+      const partBuffer = buffer.slice(start, end);
+      const partMD5 = crypto.createHash('md5').update(partBuffer).digest();
+      md5s.push(partMD5);
+    }
+    
+    const combined = Buffer.concat(md5s);
+    const finalMD5 = crypto.createHash('md5').update(combined).digest('hex');
+    return `${finalMD5}-${numParts}`;
+  }
+
   getS3Key(fileName) {
     return this.options.basePath 
       ? path.posix.join(this.options.basePath, fileName)
@@ -404,8 +422,9 @@ class WebpackS3AssetsPlugin {
     }
 
     if (skipExistingFiles) {
-      const localMD5 = this.getContentMD5(file.content);
-      const exists = await this.checkFileExists(key, localMD5);
+      // For multipart uploads, S3 ETag is not a simple MD5, it's md5-of-md5s
+      const localETag = this.getMultipartETag(file.content, partSize);
+      const exists = await this.checkFileExists(key, localETag);
       if (exists) {
         this.log(`  ⏭️  Skipping ${file.name}: already exists with same content`);
         this.skippedExistingCount++;
