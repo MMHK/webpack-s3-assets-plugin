@@ -1,6 +1,7 @@
 const { 
   S3Client, 
   PutObjectCommand, 
+  HeadObjectCommand,
   CreateMultipartUploadCommand, 
   UploadPartCommand, 
   CompleteMultipartUploadCommand, 
@@ -13,6 +14,7 @@ const mime = require('mime-types');
 const path = require('path');
 const https = require('https');
 const http = require('http');
+const crypto = require('crypto');
 
 const PLUGIN_NAME = 'WebpackS3AssetsPlugin';
 
@@ -86,6 +88,8 @@ class WebpackS3AssetsPlugin {
       partSize: 5 * 1024 * 1024,            // 5MB parts for multipart
       maxFileSize: 5 * 1024 * 1024 * 1024,  // 5GB max
       skipLargeFiles: false,
+      // Skip existing files based on hash comparison
+      skipExistingFiles: false,
       ...options
     };
 
@@ -95,7 +99,35 @@ class WebpackS3AssetsPlugin {
     this.failedUploads = [];
     this.successCount = 0;
     this.skippedCount = 0;
+    this.skippedExistingCount = 0;
     this.startTime = 0;
+  }
+
+  getContentMD5(buffer) {
+    return crypto.createHash('md5').update(buffer).digest('hex');
+  }
+
+  getS3Key(fileName) {
+    return this.options.basePath 
+      ? path.posix.join(this.options.basePath, fileName)
+      : fileName;
+  }
+
+  async checkFileExists(key, localMD5) {
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.options.s3UploadOptions.Bucket,
+        Key: key
+      });
+      const response = await this.s3Client.send(command);
+      const remoteETag = response.ETag?.replace(/"/g, '');
+      return remoteETag === localMD5;
+    } catch (error) {
+      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+        return false;
+      }
+      throw error;
+    }
   }
 
   log(...args) {
@@ -179,6 +211,7 @@ class WebpackS3AssetsPlugin {
     this.failedUploads = [];
     this.successCount = 0;
     this.skippedCount = 0;
+    this.skippedExistingCount = 0;
     
     if (this.options.rateLimitKBps > 0) {
       this.rateLimiter = new RateLimiter(this.options.rateLimitKBps);
@@ -259,6 +292,10 @@ class WebpackS3AssetsPlugin {
       console.log(`\n[WebpackS3AssetsPlugin] Upload Summary (${duration}s, ${avgSpeed} MB/s avg):`);
       console.log(`   ✅ Successfully uploaded: ${this.successCount}/${totalFiles} files`);
       
+      if (this.skippedExistingCount > 0) {
+        console.log(`   ⏭️  Skipped (already exists): ${this.skippedExistingCount} files`);
+      }
+      
       if (this.skippedCount > 0) {
         console.log(`   ⊘ Skipped (too large): ${this.skippedCount} files`);
       }
@@ -286,7 +323,8 @@ class WebpackS3AssetsPlugin {
   }
 
   async uploadSmallFile(file) {
-    const { retries, retryDelay, maxFileSize, skipLargeFiles } = this.options;
+    const { retries, retryDelay, maxFileSize, skipLargeFiles, skipExistingFiles } = this.options;
+    const key = this.getS3Key(file.name);
     
     if (file.size > maxFileSize) {
       if (skipLargeFiles) {
@@ -297,9 +335,15 @@ class WebpackS3AssetsPlugin {
       throw new Error(`File exceeds maximum size of ${this.formatBytes(maxFileSize)}`);
     }
     
-    const key = this.options.basePath 
-      ? path.posix.join(this.options.basePath, file.name)
-      : file.name;
+    if (skipExistingFiles) {
+      const localMD5 = this.getContentMD5(file.content);
+      const exists = await this.checkFileExists(key, localMD5);
+      if (exists) {
+        this.log(`  ⏭️  Skipping ${file.name}: already exists with same content`);
+        this.skippedExistingCount++;
+        return;
+      }
+    }
 
     const contentType = mime.lookup(file.name) || 'application/octet-stream';
     
@@ -347,7 +391,8 @@ class WebpackS3AssetsPlugin {
   }
 
   async uploadLargeFile(file) {
-    const { retries, retryDelay, maxFileSize, skipLargeFiles, partSize } = this.options;
+    const { retries, retryDelay, maxFileSize, skipLargeFiles, skipExistingFiles, partSize } = this.options;
+    const key = this.getS3Key(file.name);
     
     if (file.size > maxFileSize) {
       if (skipLargeFiles) {
@@ -357,10 +402,16 @@ class WebpackS3AssetsPlugin {
       }
       throw new Error(`File exceeds maximum size of ${this.formatBytes(maxFileSize)}`);
     }
-    
-    const key = this.options.basePath 
-      ? path.posix.join(this.options.basePath, file.name)
-      : file.name;
+
+    if (skipExistingFiles) {
+      const localMD5 = this.getContentMD5(file.content);
+      const exists = await this.checkFileExists(key, localMD5);
+      if (exists) {
+        this.log(`  ⏭️  Skipping ${file.name}: already exists with same content`);
+        this.skippedExistingCount++;
+        return;
+      }
+    }
 
     const contentType = mime.lookup(file.name) || 'application/octet-stream';
     

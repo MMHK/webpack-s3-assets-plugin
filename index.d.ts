@@ -123,6 +123,13 @@ export interface WebpackS3AssetsPluginOptions {
    * @default false
    */
   skipLargeFiles?: boolean;
+
+  /**
+   * Skip uploading files that already exist in S3 with the same content (MD5 hash comparison)
+   * Uses ETag comparison to determine if file content is identical
+   * @default false
+   */
+  skipExistingFiles?: boolean;
 }
 
 export default class WebpackS3AssetsPlugin {

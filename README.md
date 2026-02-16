@@ -112,6 +112,7 @@ module.exports = {
       partSize: 5 * 1024 * 1024,            // 5MB parts for multipart upload
       maxFileSize: 5 * 1024 * 1024 * 1024,  // 5GB max file size
       skipLargeFiles: false,                // Skip files exceeding maxFileSize
+      skipExistingFiles: false,             // Skip files already in S3 with same content
       
       // Progress & debug
       progress: true,        // Show progress bar
@@ -143,6 +144,7 @@ module.exports = {
 | `partSize` | `number` | `5242880` | Part size (5MB) for multipart uploads |
 | `maxFileSize` | `number` | `5368709120` | Maximum file size (5GB) |
 | `skipLargeFiles` | `boolean` | `false` | Skip files larger than maxFileSize instead of failing |
+| `skipExistingFiles` | `boolean` | `false` | Skip files that already exist in S3 with the same content (MD5 hash comparison) |
 
 ## How It Works
 

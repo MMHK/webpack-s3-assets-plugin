@@ -1,6 +1,6 @@
 {
   "name": "webpack-s3-assets-plugin",
-  "version": "1.0.0",
+  "version": "1.7.0",
   "description": "Modern webpack plugin for uploading assets to S3 with concurrency control, rate limiting and progress bar",
   "main": "index.js",
   "types": "index.d.ts",
