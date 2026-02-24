@@ -6,10 +6,19 @@
   "types": "index.d.ts",
   "scripts": {
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
+    "test:silent": "SILENT_TESTS=true jest",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:report": "eslint . --format html -o eslint-report.html",
+    "validate": "yarn lint && yarn test",
+    "ci": "yarn lint && yarn test:coverage",
+    "clean": "rm -rf coverage eslint-report.html",
     "version": "echo 'Version bump detected'",
     "postversion": "git push && git push --tags",
-    "prerelease": "yarn lint && yarn test",
+    "prerelease": "yarn ci",
     "release": "yarn version && echo 'Tag pushed, GitHub Actions will publish to npm'"
   },
   "keywords": [
@@ -27,7 +36,7 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "packageManager": "yarn@4.0.2",
+  "packageManager": "yarn@4.12.0",
   "peerDependencies": {
     "webpack": "^4.0.0 || ^5.0.0"
   },

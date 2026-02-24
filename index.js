@@ -245,7 +245,7 @@ class WebpackS3AssetsPlugin {
         barCompleteChar: '\u2588',
         barIncompleteChar: '\u2591',
         hideCursor: true,
-        stopOnComplete: false,
+        stopOnComplete: true,
         clearOnComplete: false
       });
       this.progressBar.start(totalFiles, 0, { speed: 'calculating...' });
@@ -301,6 +301,7 @@ class WebpackS3AssetsPlugin {
       
       if (this.progressBar) {
         this.progressBar.stop();
+        this.progressBar = null;
       }
 
       const duration = ((Date.now() - this.startTime) / 1000).toFixed(1);
@@ -335,8 +336,15 @@ class WebpackS3AssetsPlugin {
     } catch (error) {
       if (this.progressBar) {
         this.progressBar.stop();
+        this.progressBar = null;
       }
       throw error;
+    } finally {
+      // Destroy S3 client to release HTTP connections
+      if (this.s3Client) {
+        this.s3Client.destroy();
+        this.s3Client = null;
+      }
     }
   }
 
