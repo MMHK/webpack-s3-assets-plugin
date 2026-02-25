@@ -51,7 +51,10 @@ describe('Webpack Integration', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        done();
+        compiler.close((closeErr) => {
+          expect(closeErr).toBeNull();
+          done();
+        });
       });
     }, 30000);
 
@@ -84,7 +87,10 @@ describe('Webpack Integration', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        done();
+        compiler.close((closeErr) => {
+          expect(closeErr).toBeNull();
+          done();
+        });
       });
     }, 30000);
   });
@@ -129,7 +135,9 @@ describe('Webpack Integration', () => {
       compiler.run((err, stats) => {
         // May fail if mini-css-extract-plugin is not installed
         // That's okay, we're testing the plugin registration
-        done();
+        compiler.close(() => {
+          done();
+        });
       });
     }, 30000);
 
@@ -159,7 +167,10 @@ describe('Webpack Integration', () => {
 
       compiler.run((err, stats) => {
         expect(err).toBeNull();
-        done();
+        compiler.close((closeErr) => {
+          expect(closeErr).toBeNull();
+          done();
+        });
       });
     }, 30000);
   });
@@ -186,7 +197,9 @@ describe('Webpack Integration', () => {
 
       compiler.run((err, stats) => {
         expect(stats.hasErrors()).toBe(true);
-        done();
+        compiler.close(() => {
+          done();
+        });
       });
     }, 30000);
 
@@ -215,7 +228,10 @@ describe('Webpack Integration', () => {
       compiler.run((err, stats) => {
         // Should complete even if upload fails
         expect(err).toBeNull();
-        done();
+        compiler.close((closeErr) => {
+          expect(closeErr).toBeNull();
+          done();
+        });
       });
     }, 30000);
   });
@@ -271,7 +287,10 @@ describe('Webpack Integration', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        done();
+        compiler.close((closeErr) => {
+          expect(closeErr).toBeNull();
+          done();
+        });
       });
     }, 30000);
 
@@ -297,7 +316,10 @@ describe('Webpack Integration', () => {
 
       compiler.run((err, stats) => {
         expect(err).toBeNull();
-        done();
+        compiler.close((closeErr) => {
+          expect(closeErr).toBeNull();
+          done();
+        });
       });
     }, 30000);
   });

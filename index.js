@@ -20,12 +20,32 @@ const PLUGIN_NAME = 'WebpackS3AssetsPlugin';
 
 // Utility to add timeout to any promise
 function withTimeout(promise, timeoutMs, errorMessage) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(errorMessage || `Timeout after ${timeoutMs}ms`)), timeoutMs);
-    })
-  ]);
+  let timeoutId;
+  let settled = false;
+  
+  const cleanup = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+  
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error(errorMessage || `Timeout after ${timeoutMs}ms`));
+      }
+    }, timeoutMs);
+  });
+  
+  // Always clean up timeout when original promise completes
+  promise.then(
+    () => { settled = true; cleanup(); },
+    () => { settled = true; cleanup(); }
+  );
+  
+  return Promise.race([promise, timeoutPromise]);
 }
 
 class RateLimiter {
@@ -69,7 +89,22 @@ class WebpackS3AssetsPlugin {
   constructor(options = {}) {
     this.options = {
       s3Options: {},
-      s3UploadOptions: {},
+      s3UploadOptions: {
+        // S3 upload options - merged with user options
+        // See: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/putobjectcommandinput.html
+        // 
+        // Common options:
+        // - Bucket: (required) S3 bucket name
+        // - ACL: 'private' | 'public-read' | 'public-read-write' | 'authenticated-read' | ...
+        // - CacheControl: 'max-age=31536000'
+        // - ContentType: (auto-detected from file extension)
+        // - ContentEncoding: 'gzip'
+        // - ContentDisposition: 'attachment'
+        // - StorageClass: 'STANDARD' | 'STANDARD_IA' | 'GLACIER' | ...
+        // - ServerSideEncryption: 'AES256' | 'aws:kms'
+        // - Metadata: { 'x-amz-meta-key': 'value' }
+        // - Expires: new Date('2025-12-31')
+      },
       basePath: '',
       exclude: null,
       include: null,

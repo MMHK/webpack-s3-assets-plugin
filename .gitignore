@@ -46,3 +46,4 @@ test/fixtures/tmp/
 # Temporary files
 *.tmp
 .cache/
+/__tests__/temp

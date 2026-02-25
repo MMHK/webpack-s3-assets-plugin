@@ -2,6 +2,26 @@
 
 Modern webpack plugin for uploading assets to AWS S3 with enhanced features including concurrency control, rate limiting, retry logic, timeout handling, and progress bar. Uses **manual multipart upload** to work around AWS SDK v3 lib-storage bugs.
 
+[![npm version](https://badge.fury.io/js/webpack-s3-assets-plugin.svg)](https://www.npmjs.com/package/webpack-s3-assets-plugin)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Table of Contents
+
+- [Features](#features)
+- [Why This Plugin?](#why-this-plugin)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Basic Configuration](#basic-configuration)
+  - [Advanced Configuration](#advanced-configuration)
+- [Options](#options)
+- [How It Works](#how-it-works)
+- [Examples](#examples)
+- [Plugin Compatibility](#plugin-compatibility)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Changelog](#changelog)
+- [License](#license)
+
 ## Features
 
 - **Webpack 4/5 Compatible** - Works with both webpack versions
@@ -252,6 +272,76 @@ If some files consistently fail:
 - Check debug logs for specific error messages
 - For large files, ensure your network can handle the upload speed
 
+## S3 Upload Options
+
+The `s3UploadOptions` accepts all options from [AWS SDK PutObjectCommand](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/putobjectcommandinput.html):
+
+```javascript
+new WebpackS3AssetsPlugin({
+  s3UploadOptions: {
+    Bucket: 'my-bucket',           // Required, no default
+    ACL: 'public-read',            // Default: undefined (uses bucket default)
+    CacheControl: 'max-age=31536000',  // Default: undefined
+    ContentDisposition: 'attachment',  // Default: undefined
+    ContentEncoding: 'gzip',       // Default: undefined
+    ContentType: 'application/javascript',  // Default: auto-detected from file extension
+    Expires: new Date('2025-12-31'),  // Default: undefined
+    Metadata: {                    // Default: undefined
+      'x-amz-meta-version': '1.0.0',
+      'x-amz-meta-build': process.env.BUILD_ID
+    },
+    ServerSideEncryption: 'AES256',  // Default: undefined
+    StorageClass: 'STANDARD_IA'    // Default: 'STANDARD'
+  }
+})
+```
+
+### Default Values
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `Bucket` | *(required)* | S3 bucket name - **must be provided** |
+| `ACL` | `undefined` | Uses bucket's default ACL |
+| `ContentType` | *(auto-detected)* | Detected from file extension using `mime-types` library, falls back to `application/octet-stream` |
+| `CacheControl` | `undefined` | No caching headers set |
+| `ContentDisposition` | `undefined` | No disposition set |
+| `ContentEncoding` | `undefined` | No encoding set |
+| `StorageClass` | `'STANDARD'` | Standard S3 storage |
+| `ServerSideEncryption` | `undefined` | No server-side encryption |
+| `Metadata` | `undefined` | No custom metadata |
+| `Expires` | `undefined` | No expiration date |
+
+### Auto-Detected Content Types
+
+Content types are automatically detected from file extensions:
+
+```javascript
+// Examples of auto-detection:
+'style.css'     → 'text/css'
+'app.js'        → 'application/javascript'
+'image.png'     → 'image/png'
+'font.woff2'    → 'font/woff2'
+'video.mp4'     → 'video/mp4'
+'data.bin'      → 'application/octet-stream' (fallback)
+```
+
+You can override auto-detection by explicitly setting `ContentType` in `s3UploadOptions`.
+
+### Common ACL Values
+
+- `private` - Owner-only access
+- `public-read` - Anyone can read
+- `public-read-write` - Anyone can read/write (not recommended)
+- `authenticated-read` - Authenticated AWS users can read
+
+### Storage Classes
+
+- `STANDARD` - Default, for frequently accessed data
+- `STANDARD_IA` - Infrequent Access, lower cost
+- `ONEZONE_IA` - Single zone, lower cost
+- `GLACIER` - Archive storage
+- `INTELLIGENT_TIERING` - Automatic cost optimization
+
 ## Filter Examples
 
 ### Using Regular Expressions
@@ -334,6 +424,169 @@ This plugin was created specifically to avoid these known bugs in AWS SDK v3's `
 
 This approach is slightly slower than parallel uploads but much more reliable and avoids all known AWS SDK bugs.
 
+## Examples
+
+### Basic Example
+
+```javascript
+const WebpackS3AssetsPlugin = require('webpack-s3-assets-plugin');
+
+module.exports = {
+  plugins: [
+    new WebpackS3AssetsPlugin({
+      s3Options: {
+        region: 'us-west-2',
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+        }
+      },
+      s3UploadOptions: {
+        Bucket: 'my-bucket'
+      }
+    })
+  ]
+};
+```
+
+### Upload with Versioned Path
+
+```javascript
+new WebpackS3AssetsPlugin({
+  s3Options: { region: 'us-west-2' },
+  s3UploadOptions: {
+    Bucket: 'my-bucket',
+    ACL: 'public-read',
+    CacheControl: 'max-age=31536000'
+  },
+  basePath: `dist/${process.env.npm_package_version}`,
+  include: /\.(js|css|png|jpg|gif)$/,
+  exclude: /\.map$/
+})
+```
+
+### Video/Large File Upload
+
+```javascript
+new WebpackS3AssetsPlugin({
+  s3Options: { region: 'us-west-2' },
+  s3UploadOptions: { Bucket: 'my-video-bucket' },
+  include: /\.(mp4|webm|mov)$/i,
+  concurrency: 1,                       // Single file at a time
+  timeout: 120000,                      // 2 min per part
+  totalTimeout: 1800000,                // 30 min total
+  multipartThreshold: 1 * 1024 * 1024,  // 1MB threshold
+  partSize: 10 * 1024 * 1024,           // 10MB parts
+  retries: 5
+})
+```
+
+### Skip Existing Files
+
+```javascript
+new WebpackS3AssetsPlugin({
+  s3Options: { region: 'us-west-2' },
+  s3UploadOptions: { Bucket: 'my-bucket' },
+  skipExistingFiles: true,  // Skip files already in S3 with same content
+  debug: true               // See which files are skipped
+})
+```
+
+See [examples/](examples/) directory for more complete configurations.
+
+## Plugin Compatibility
+
+This plugin is tested and confirmed compatible with:
+
+| Plugin | Compatibility | Notes |
+|--------|--------------|-------|
+| [clean-webpack-plugin](https://github.com/johnagan/clean-webpack-plugin) | ✅ Full | Works correctly, cleanup happens before upload |
+| [html-webpack-plugin](https://github.com/jantimon/html-webpack-plugin) | ✅ Full | HTML files are uploaded correctly |
+| [mini-css-extract-plugin](https://github.com/webpack-contrib/mini-css-extract-plugin) | ✅ Full | CSS files are extracted and uploaded |
+| [terser-webpack-plugin](https://github.com/webpack-contrib/terser-webpack-plugin) | ✅ Full | Minified files upload correctly |
+| [copy-webpack-plugin](https://github.com/webpack-contrib/copy-webpack-plugin) | ✅ Full | Copied static assets are uploaded |
+| [webpack-manifest-plugin](https://github.com/shellscape/webpack-manifest-plugin) | ✅ Full | Manifest file is uploaded |
+| [webpack.DefinePlugin](https://webpack.js.org/plugins/define-plugin/) | ✅ Full | Environment variables work correctly |
+| [webpack.ProgressPlugin](https://webpack.js.org/plugins/progress-plugin/) | ✅ Full | Progress tracking works together |
+
+### Order Matters
+
+When using with other plugins, ensure `WebpackS3AssetsPlugin` is added **after** plugins that generate assets:
+
+```javascript
+plugins: [
+  new CleanWebpackPlugin(),
+  new HtmlWebpackPlugin(),
+  new MiniCssExtractPlugin(),
+  // ... other asset-generating plugins
+  new WebpackS3AssetsPlugin({
+    // Upload happens after all assets are generated
+  })
+]
+```
+
+## Development
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/webpack-s3-assets-plugin.git
+cd webpack-s3-assets-plugin
+
+# Install dependencies
+yarn install
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:coverage
+
+# Run specific test file
+yarn test -- rate-limiter
+```
+
+### Linting
+
+```bash
+# Run ESLint
+yarn lint
+
+# Fix ESLint issues
+yarn lint:fix
+```
+
+### E2E Tests with Real S3
+
+Create `__tests__/.env` file:
+
+```bash
+AWS_ACCESS_KEY=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_BUCKET=your_bucket
+AWS_REGION=us-east-1
+```
+
+Then run:
+
+```bash
+yarn test -- e2e-real-s3
+```
+
+See [__tests__/README.md](__tests__/README.md) for detailed testing documentation.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and breaking changes.
+
 ## License
 
-MIT
+MIT © [webpack-s3-assets-plugin](https://github.com/yourusername/webpack-s3-assets-plugin)
