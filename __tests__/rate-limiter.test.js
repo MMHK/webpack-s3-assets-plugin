@@ -39,9 +39,9 @@ describe('RateLimiter', () => {
       });
 
       // Initialize rate limiter
-      const RateLimiter = plugin.rateLimiter?.constructor || 
+      const RateLimiter = plugin.rateLimiter?.constructor ||
         (await getRateLimiterFromModule());
-      
+
       const rateLimiter = new RateLimiter(100); // 100KB/s
 
       // First consumption should be immediate

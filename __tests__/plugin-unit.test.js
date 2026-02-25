@@ -261,7 +261,7 @@ describe('WebpackS3AssetsPlugin', () => {
     it('should calculate correct MD5 hash', () => {
       const content = Buffer.from('Hello World');
       const expectedHash = crypto.createHash('md5').update(content).digest('hex');
-      
+
       expect(plugin.getContentMD5(content)).toBe(expectedHash);
     });
 

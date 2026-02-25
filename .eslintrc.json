@@ -47,7 +47,8 @@
       "vars": "all",
       "args": "after-used",
       "ignoreRestSiblings": true,
-      "argsIgnorePattern": "^_"
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
     }],
     "no-console": ["warn", {
       "allow": ["error", "warn", "info"]
@@ -166,7 +167,14 @@
       },
       "rules": {
         "no-console": "off",
-        "max-len": "off"
+        "max-len": "off",
+        "no-unused-vars": ["warn", {
+          "vars": "all",
+          "args": "after-used",
+          "ignoreRestSiblings": true,
+          "argsIgnorePattern": "^_|^err$|^stats$",
+          "varsIgnorePattern": "^_"
+        }]
       }
     }
   ],
@@ -174,6 +182,7 @@
     "node_modules/",
     "coverage/",
     "dist/",
-    "*.min.js"
+    "*.min.js",
+    "__tests__/temp/"
   ]
 }

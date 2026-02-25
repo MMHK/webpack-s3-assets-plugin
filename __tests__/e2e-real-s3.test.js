@@ -1,14 +1,14 @@
 /**
  * E2E Real S3 Upload Test
  * 使用真實 S3 憑證進行端到端測試
- * 
+ *
  * 此測試會：
  * 1. 從 __tests__/.env 加載 S3 配置
  * 2. 在 S3 上創建臨時測試文件夾
  * 3. 執行 webpack 構建並上傳資產
  * 4. 驗證文件成功上傳到 S3
  * 5. 測試完成後清理所有 S3 文件
- * 
+ *
  * 運行此測試：npm test -- __tests__/e2e-real-s3.test.js
  */
 
@@ -31,9 +31,9 @@ if (fs.existsSync(envPath)) {
 const WebpackS3AssetsPlugin = require('../index.js');
 
 // 檢查是否有必要的環境變量
-const hasS3Config = process.env.AWS_ACCESS_KEY && 
-                    process.env.AWS_SECRET_ACCESS_KEY && 
-                    process.env.AWS_BUCKET && 
+const hasS3Config = process.env.AWS_ACCESS_KEY &&
+                    process.env.AWS_SECRET_ACCESS_KEY &&
+                    process.env.AWS_BUCKET &&
                     process.env.AWS_REGION;
 
 // 生成唯一的測試文件夾名稱
@@ -48,7 +48,7 @@ describe('E2E Real S3 Upload Test', () => {
   let testFolder;
   let tempDir;
   let uploadedKeys = [];
-  
+
   // 跳過測試如果沒有 S3 配置
   const conditionalTest = hasS3Config ? it : it.skip;
   const conditionalBeforeAll = hasS3Config ? beforeAll : () => {};
@@ -80,7 +80,9 @@ describe('E2E Real S3 Upload Test', () => {
   }, 30000);
 
   conditionalAfterAll(async () => {
-    if (!hasS3Config || !s3Client) return;
+    if (!hasS3Config || !s3Client) {
+      return;
+    }
 
     console.log(`[E2E Test] Cleaning up ${uploadedKeys.length} uploaded files...`);
 
@@ -179,7 +181,7 @@ describe('E2E Real S3 Upload Test', () => {
 
     // 執行 webpack 構建
     console.log('[E2E Test] Starting webpack build...');
-    
+
     const stats = await new Promise((resolve, reject) => {
       compiler.run((err, stats) => {
         if (err) {
@@ -193,8 +195,11 @@ describe('E2E Real S3 Upload Test', () => {
     // 關閉 webpack compiler 釋放資源
     await new Promise((resolve, reject) => {
       compiler.close((err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       });
     });
 
@@ -211,7 +216,7 @@ describe('E2E Real S3 Upload Test', () => {
 
     // 驗證文件已上傳到 S3
     console.log('[E2E Test] Verifying uploaded files in S3...');
-    
+
     const listCommand = new ListObjectsV2Command({
       Bucket: bucket,
       Prefix: basePath
@@ -240,14 +245,14 @@ describe('E2E Real S3 Upload Test', () => {
 
       const getResponse = await s3Client.send(getCommand);
       expect(getResponse.Body).toBeDefined();
-      
+
       // 讀取並驗證內容
       const chunks = [];
       for await (const chunk of getResponse.Body) {
         chunks.push(chunk);
       }
       const content = Buffer.concat(chunks);
-      
+
       // 驗證內容長度與 S3 返回的 Size 一致
       expect(content.length).toBe(obj.Size);
       console.log(`[E2E Test] Verified: ${obj.Key} - ${formatBytes(content.length)} readable`);
@@ -308,8 +313,11 @@ describe('E2E Real S3 Upload Test', () => {
     // 關閉 webpack compiler
     await new Promise((resolve, reject) => {
       compiler.close((err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       });
     });
 
@@ -382,19 +390,25 @@ describe('E2E Real S3 Upload Test', () => {
     });
 
     console.log('[E2E Test] First upload (should upload all files)...');
-    
+
     await new Promise((resolve, reject) => {
       compiler1.run((err, stats) => {
-        if (err) reject(err);
-        else resolve(stats);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(stats);
+        }
       });
     });
 
     // 關閉第一個 compiler
     await new Promise((resolve, reject) => {
       compiler1.close((err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       });
     });
 
@@ -439,21 +453,27 @@ describe('E2E Real S3 Upload Test', () => {
     try {
       await new Promise((resolve, reject) => {
         compiler2.run((err, stats) => {
-          if (err) reject(err);
-          else resolve(stats);
+          if (err) {
+            reject(err);
+          } else {
+            resolve(stats);
+          }
         });
       });
 
       // 關閉第二個 compiler
       await new Promise((resolve, reject) => {
         compiler2.close((err) => {
-          if (err) reject(err);
-          else resolve();
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
         });
       });
 
       // 檢查是否有跳過提示
-      const hasSkippedMessage = logs.some(log => 
+      const hasSkippedMessage = logs.some(log =>
         log.includes('already exists') || log.includes('Skipped')
       );
 
@@ -477,7 +497,9 @@ describe('E2E Real S3 Upload Test', () => {
 
 // 輔助函數：格式化字節大小
 function formatBytes(bytes) {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {
+    return '0 B';
+  }
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

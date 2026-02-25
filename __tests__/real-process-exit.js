@@ -1,7 +1,7 @@
 /**
  * Real Process Exit Test
  * 獨立運行的腳本，測試真實場景下進程是否正常退出
- * 
+ *
  * 運行方式：node __tests__/real-process-exit.js
  */
 
@@ -39,14 +39,14 @@ jest.mock('cli-progress', () => ({
 
 async function main() {
   console.log('[Process Exit Test] Starting...\n');
-  
+
   const tempDir = path.join(__dirname, 'temp', `real-exit-${Date.now()}`);
   fs.mkdirSync(tempDir, { recursive: true });
 
   // 創建測試文件
   const entryFile = path.join(tempDir, 'entry.js');
   const cssFile = path.join(tempDir, 'styles.css');
-  
+
   fs.writeFileSync(entryFile, `
     import "./styles.css";
     console.log("Hello World");
@@ -100,7 +100,7 @@ async function main() {
       new CopyWebpackPlugin({
         patterns: [{ from: publicDir, to: 'static' }]
       }),
-      new webpack.ProgressPlugin((percentage, message) => {
+      new webpack.ProgressPlugin((percentage, _message) => {
         if (percentage === 1) {
           console.log('[Process Exit Test] Webpack build 100% complete');
         }
@@ -115,14 +115,17 @@ async function main() {
   });
 
   console.log('[Process Exit Test] Running webpack build...\n');
-  
+
   const startTime = Date.now();
 
   try {
     const stats = await new Promise((resolve, reject) => {
       compiler.run((err, stats) => {
-        if (err) reject(err);
-        else resolve(stats);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(stats);
+        }
       });
     });
 
@@ -136,8 +139,11 @@ async function main() {
 
     await new Promise((resolve, reject) => {
       compiler.close((err) => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       });
     });
 
@@ -159,7 +165,6 @@ async function main() {
 
     // 如果一切正常，進程應該會在這裡自然退出
     console.log('[Process Exit Test] Waiting for natural process exit...');
-
   } catch (error) {
     console.error('[Process Exit Test] Error:', error);
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -171,12 +176,14 @@ async function main() {
 const jest = require('jest');
 
 // 手動設置 jest mock
-jest.mock = jest.mock || function() {};
+jest.mock = jest.mock || function () {};
 global.jest = {
   fn: () => {
     const mockFn = (...args) => mockFn._impl(...args);
     mockFn._impl = () => {};
-    mockFn.mockReturnValue = (val) => { mockFn._impl = () => val; return mockFn; };
+    mockFn.mockReturnValue = (val) => {
+      mockFn._impl = () => val; return mockFn;
+    };
     return mockFn;
   }
 };

@@ -51,19 +51,19 @@ const advancedConfig = {
       },
       // Upload to versioned path
       basePath: `dist/${process.env.npm_package_version || 'v1.0.0'}`,
-      
+
       // Only upload JS, CSS, and image files
       include: /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2)$/,
-      
+
       // Exclude source maps and test files
       exclude: [/\.map$/, /\.test\./],
-      
+
       // Limit to 3 concurrent uploads
       concurrency: 3,
-      
+
       // Limit upload speed to 500 KB/s
       rateLimitKBps: 500,
-      
+
       // Show progress bar
       progress: true
     })
@@ -91,7 +91,7 @@ const dynamicFilterConfig = {
       s3UploadOptions: {
         Bucket: process.env.S3_BUCKET || 'my-webpack-assets'
       },
-      
+
       // Include only files larger than 1KB
       include: [
         /\.(js|css)$/,
@@ -100,7 +100,7 @@ const dynamicFilterConfig = {
           return filename.includes('main') || filename.includes('vendor');
         }
       ],
-      
+
       // Exclude files modified in last 5 minutes
       exclude: (filename) => {
         const fs = require('fs');
@@ -116,7 +116,7 @@ const dynamicFilterConfig = {
 // eslint-disable-next-line no-unused-vars
 const getConfig = (env) => {
   const isProduction = env === 'production';
-  
+
   return {
     mode: isProduction ? 'production' : 'development',
     entry: './src/index.js',

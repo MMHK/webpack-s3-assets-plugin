@@ -18,16 +18,16 @@ describe('S3 Upload Functionality', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     plugin = new WebpackS3AssetsPlugin({
-      s3Options: { 
+      s3Options: {
         region: 'us-east-1',
         credentials: {
           accessKeyId: 'test-key',
           secretAccessKey: 'test-secret'
         }
       },
-      s3UploadOptions: { 
+      s3UploadOptions: {
         Bucket: 'test-bucket',
         ACL: 'public-read'
       },
@@ -185,7 +185,7 @@ describe('S3 Upload Functionality', () => {
     it('should skip files exceeding max size', async () => {
       plugin.options.maxFileSize = 100;
       plugin.options.skipLargeFiles = true;
-      
+
       const file = {
         name: 'too-large.js',
         content: Buffer.alloc(200),
@@ -201,7 +201,7 @@ describe('S3 Upload Functionality', () => {
     it('should throw when skipLargeFiles is false and file exceeds max', async () => {
       plugin.options.maxFileSize = 100;
       plugin.options.skipLargeFiles = false;
-      
+
       const file = {
         name: 'too-large.js',
         content: Buffer.alloc(200),
@@ -238,7 +238,7 @@ describe('S3 Upload Functionality', () => {
     beforeEach(() => {
       plugin.options.multipartThreshold = 1024; // 1KB
       plugin.options.partSize = 512; // 512B parts
-      
+
       mockS3Client.setResponse('CreateMultipartUploadCommand', {
         UploadId: 'test-upload-id-123'
       });
@@ -267,7 +267,7 @@ describe('S3 Upload Functionality', () => {
 
     it('should abort multipart upload on error', async () => {
       mockS3Client.setError('UploadPartCommand', new Error('Upload failed'));
-      
+
       const file = {
         name: 'large.zip',
         content: Buffer.alloc(1500),
@@ -288,7 +288,7 @@ describe('S3 Upload Functionality', () => {
       let attempts = 0;
       mockS3Client.send = jest.fn().mockImplementation(async (command) => {
         const commandName = command.constructor.name;
-        
+
         if (commandName === 'CreateMultipartUploadCommand') {
           attempts++;
           if (attempts < 2) {
@@ -341,7 +341,7 @@ describe('S3 Upload Functionality', () => {
   describe('collectAndUploadAssets', () => {
     it('should skip when no files to upload', async () => {
       const compilation = createMockCompilation({ assets: {} });
-      
+
       // Mock console.log to capture output
       const mockConsole = createMockConsole();
       const originalLog = console.log;
@@ -349,7 +349,7 @@ describe('S3 Upload Functionality', () => {
 
       await plugin.collectAndUploadAssets(compilation, compilation.assets);
 
-      expect(mockConsole.getCalls().log.some(call => 
+      expect(mockConsole.getCalls().log.some(call =>
         call.some(arg => typeof arg === 'string' && arg.includes('No files to upload'))
       )).toBe(true);
 
@@ -359,7 +359,7 @@ describe('S3 Upload Functionality', () => {
     it('should categorize files by size', async () => {
       plugin.options.multipartThreshold = 1024;
       plugin.options.progress = false;
-      
+
       const assets = {
         'small.js': Buffer.from('small'),
         'large.zip': Buffer.alloc(2048) // 2KB > 1KB threshold
@@ -395,7 +395,7 @@ describe('S3 Upload Functionality', () => {
     it('should handle upload failures gracefully', async () => {
       plugin.options.continueOnError = true;
       plugin.options.progress = false;
-      
+
       const assets = {
         'fail.js': Buffer.from('content')
       };
@@ -417,7 +417,7 @@ describe('S3 Upload Functionality', () => {
     it('should throw on failure when continueOnError is false', async () => {
       plugin.options.continueOnError = false;
       plugin.options.progress = false;
-      
+
       const assets = {
         'fail.js': Buffer.from('content')
       };

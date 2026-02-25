@@ -12,13 +12,13 @@ const originalConsoleWarn = console.warn;
 const originalConsoleInfo = console.info;
 
 // Global test configuration
-beforeAll(function() {
+beforeAll(function () {
   // Optionally suppress console output during tests
   if (process.env.SILENT_TESTS === 'true') {
-    console.log = function() {};
-    console.error = function() {};
-    console.warn = function() {};
-    console.info = function() {};
+    console.log = function () {};
+    console.error = function () {};
+    console.warn = function () {};
+    console.info = function () {};
   }
 
   // Set default timeout for async operations
@@ -28,7 +28,7 @@ beforeAll(function() {
 });
 
 // Restore console methods after all tests
-afterAll(function() {
+afterAll(function () {
   console.log = originalConsoleLog;
   console.error = originalConsoleError;
   console.warn = originalConsoleWarn;
@@ -36,18 +36,18 @@ afterAll(function() {
 });
 
 // Global error handling for unhandled promises
-process.on('unhandledRejection', function(reason, promise) {
+process.on('unhandledRejection', function (reason, promise) {
   if (process.env.DEBUG_TESTS === 'true') {
     originalConsoleError('Unhandled Rejection at:', promise, 'reason:', reason);
   }
 });
 
 // Clean up any temporary files after tests
-afterAll(function() {
+afterAll(function () {
   const fs = require('fs');
   const path = require('path');
   const tempDir = path.join(__dirname, 'temp');
-  
+
   if (fs.existsSync(tempDir)) {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });

@@ -14,10 +14,10 @@ const crypto = require('crypto');
 function createMockCompilation(options = {}) {
   const {
     assets = {},
-    assetNames = [],
-    webpackVersion = 5,
-    errors = [],
-    warnings = []
+    assetNames: _assetNames = [],
+    webpackVersion: _webpackVersion = 5,
+    errors: _errors = [],
+    warnings: _warnings = []
   } = options;
 
   const compilation = {
@@ -37,7 +37,7 @@ function createMockCompilation(options = {}) {
       size: jest.fn().mockReturnValue(buffer.length)
     };
     compilation.assets[name] = source;
-    
+
     compilation.getAsset.mockImplementation((assetName) => {
       if (assetName === name) {
         return {
@@ -61,7 +61,7 @@ function createMockCompilation(options = {}) {
 function createMockCompiler(options = {}) {
   const {
     compilation = createMockCompilation(options),
-    webpackVersion = 5,
+    webpackVersion: _webpackVersion = 5,
     isWebpack5 = true
   } = options;
 
@@ -241,7 +241,9 @@ function validateS3UploadParams(params) {
  * @returns {boolean} Are equal
  */
 function buffersEqual(buf1, buf2) {
-  if (buf1.length !== buf2.length) return false;
+  if (buf1.length !== buf2.length) {
+    return false;
+  }
   return buf1.equals(buf2);
 }
 

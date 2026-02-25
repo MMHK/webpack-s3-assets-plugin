@@ -178,7 +178,7 @@ describe('Webpack Integration', () => {
   describe('Error Handling', () => {
     it('should handle compilation errors gracefully', (done) => {
       const entryFile = path.join(tempDir, 'entry.js');
-      
+
       const compiler = webpack({
         mode: 'production',
         entry: entryFile, // File doesn't exist
@@ -251,14 +251,14 @@ describe('Webpack Integration', () => {
         },
         plugins: [
           new WebpackS3AssetsPlugin({
-            s3Options: { 
+            s3Options: {
               region: 'us-west-2',
               credentials: {
                 accessKeyId: 'test',
                 secretAccessKey: 'test'
               }
             },
-            s3UploadOptions: { 
+            s3UploadOptions: {
               Bucket: 'my-bucket',
               ACL: 'public-read',
               StorageClass: 'STANDARD_IA'
@@ -350,7 +350,7 @@ describe('Webpack Integration', () => {
       const watching = compiler.watch({}, (err, stats) => {
         buildCount++;
         expect(err).toBeNull();
-        
+
         if (buildCount === 1) {
           // Trigger a rebuild
           fs.writeFileSync(entryFile, 'console.log("v2");');

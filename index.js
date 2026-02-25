@@ -1,11 +1,11 @@
-const { 
-  S3Client, 
-  PutObjectCommand, 
+const {
+  S3Client,
+  PutObjectCommand,
   HeadObjectCommand,
-  CreateMultipartUploadCommand, 
-  UploadPartCommand, 
-  CompleteMultipartUploadCommand, 
-  AbortMultipartUploadCommand 
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand
 } = require('@aws-sdk/client-s3');
 const { NodeHttpHandler } = require('@smithy/node-http-handler');
 const pLimit = require('p-limit');
@@ -22,14 +22,14 @@ const PLUGIN_NAME = 'WebpackS3AssetsPlugin';
 function withTimeout(promise, timeoutMs, errorMessage) {
   let timeoutId;
   let settled = false;
-  
+
   const cleanup = () => {
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
   };
-  
+
   const timeoutPromise = new Promise((_, reject) => {
     timeoutId = setTimeout(() => {
       if (!settled) {
@@ -38,13 +38,17 @@ function withTimeout(promise, timeoutMs, errorMessage) {
       }
     }, timeoutMs);
   });
-  
+
   // Always clean up timeout when original promise completes
   promise.then(
-    () => { settled = true; cleanup(); },
-    () => { settled = true; cleanup(); }
+    () => {
+      settled = true; cleanup();
+    },
+    () => {
+      settled = true; cleanup();
+    }
   );
-  
+
   return Promise.race([promise, timeoutPromise]);
 }
 
@@ -57,16 +61,18 @@ class RateLimiter {
   }
 
   async consume(bytes) {
-    if (!this.rateLimitBytes) return;
+    if (!this.rateLimitBytes) {
+      return;
+    }
 
     this.refill();
-    
+
     while (this.tokens < bytes) {
       const waitTime = Math.ceil((bytes - this.tokens) / this.refillRate);
       await this.sleep(waitTime);
       this.refill();
     }
-    
+
     this.tokens -= bytes;
   }
 
@@ -92,7 +98,7 @@ class WebpackS3AssetsPlugin {
       s3UploadOptions: {
         // S3 upload options - merged with user options
         // See: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/interfaces/putobjectcommandinput.html
-        // 
+        //
         // Common options:
         // - Bucket: (required) S3 bucket name
         // - ACL: 'private' | 'public-read' | 'public-read-write' | 'authenticated-read' | ...
@@ -146,7 +152,7 @@ class WebpackS3AssetsPlugin {
   getMultipartETag(buffer, partSize) {
     const numParts = Math.ceil(buffer.length / partSize);
     const md5s = [];
-    
+
     for (let i = 0; i < numParts; i++) {
       const start = i * partSize;
       const end = Math.min(start + partSize, buffer.length);
@@ -154,14 +160,14 @@ class WebpackS3AssetsPlugin {
       const partMD5 = crypto.createHash('md5').update(partBuffer).digest();
       md5s.push(partMD5);
     }
-    
+
     const combined = Buffer.concat(md5s);
     const finalMD5 = crypto.createHash('md5').update(combined).digest('hex');
     return `${finalMD5}-${numParts}`;
   }
 
   getS3Key(fileName) {
-    return this.options.basePath 
+    return this.options.basePath
       ? path.posix.join(this.options.basePath, fileName)
       : fileName;
   }
@@ -196,7 +202,7 @@ class WebpackS3AssetsPlugin {
     if (isWebpack5) {
       compiler.hooks.compilation.tap(PLUGIN_NAME, (compilation) => {
         const { Compilation } = webpack;
-        
+
         compilation.hooks.processAssets.tapAsync(
           {
             name: PLUGIN_NAME,
@@ -220,7 +226,7 @@ class WebpackS3AssetsPlugin {
 
   async collectAndUploadAssets(compilation, assets) {
     const files = this.getAssets(compilation, assets);
-    
+
     if (files.length === 0) {
       console.log('[WebpackS3AssetsPlugin] No files to upload');
       return;
@@ -229,11 +235,11 @@ class WebpackS3AssetsPlugin {
     const largeFiles = files.filter(f => f.size >= this.options.multipartThreshold);
     const smallFiles = files.filter(f => f.size < this.options.multipartThreshold);
     const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-    
+
     console.log(`\n[WebpackS3AssetsPlugin] Starting upload of ${files.length} files (${this.formatBytes(totalSize)}) to S3:`);
     console.log(`  📄 Small files (<${this.formatBytes(this.options.multipartThreshold)}): ${smallFiles.length} (PutObjectCommand)`);
     console.log(`  🎬 Large files (≥${this.formatBytes(this.options.multipartThreshold)}): ${largeFiles.length} (Multipart Upload)`);
-    
+
     this.startTime = Date.now();
 
     // Initialize S3 client with connection pool
@@ -265,7 +271,7 @@ class WebpackS3AssetsPlugin {
     this.successCount = 0;
     this.skippedCount = 0;
     this.skippedExistingCount = 0;
-    
+
     if (this.options.rateLimitKBps > 0) {
       this.rateLimiter = new RateLimiter(this.options.rateLimitKBps);
     }
@@ -291,7 +297,7 @@ class WebpackS3AssetsPlugin {
 
     const updateProgress = () => {
       processedCount++;
-      
+
       const now = Date.now();
       const timeDiff = (now - lastUpdateTime) / 1000;
       if (timeDiff >= 1) {
@@ -299,9 +305,9 @@ class WebpackS3AssetsPlugin {
         const speed = filesDiff / timeDiff;
         lastUpdateTime = now;
         lastUpdateCount = processedCount;
-        
+
         if (this.progressBar) {
-          this.progressBar.update(processedCount, { 
+          this.progressBar.update(processedCount, {
             speed: `${speed.toFixed(1)} files/s`
           });
         }
@@ -311,10 +317,10 @@ class WebpackS3AssetsPlugin {
     };
 
     // Create upload tasks
-    const uploadTasks = files.map((file) => 
+    const uploadTasks = files.map((file) =>
       limit(async () => {
         this.log(`Starting: ${file.name} (${this.formatBytes(file.size)})`);
-        
+
         try {
           if (file.size < this.options.multipartThreshold) {
             await this.uploadSmallFile(file);
@@ -333,7 +339,7 @@ class WebpackS3AssetsPlugin {
     try {
       const uploadPromise = Promise.allSettled(uploadTasks);
       await withTimeout(uploadPromise, this.options.totalTimeout, 'Total upload timeout');
-      
+
       if (this.progressBar) {
         this.progressBar.stop();
         this.progressBar = null;
@@ -345,18 +351,18 @@ class WebpackS3AssetsPlugin {
       // Summary
       console.log(`\n[WebpackS3AssetsPlugin] Upload Summary (${duration}s, ${avgSpeed} MB/s avg):`);
       console.log(`   ✅ Successfully uploaded: ${this.successCount}/${totalFiles} files`);
-      
+
       if (this.skippedExistingCount > 0) {
         console.log(`   ⏭️  Skipped (already exists): ${this.skippedExistingCount} files`);
       }
-      
+
       if (this.skippedCount > 0) {
         console.log(`   ⊘ Skipped (too large): ${this.skippedCount} files`);
       }
-      
+
       if (this.failedUploads.length > 0) {
         console.log(`   ❌ Failed: ${this.failedUploads.length} files`);
-        
+
         if (this.failedUploads.length <= 5) {
           console.log('\n   Failed details:');
           this.failedUploads.forEach(({ file, error, size }) => {
@@ -386,7 +392,7 @@ class WebpackS3AssetsPlugin {
   async uploadSmallFile(file) {
     const { retries, retryDelay, maxFileSize, skipLargeFiles, skipExistingFiles } = this.options;
     const key = this.getS3Key(file.name);
-    
+
     if (file.size > maxFileSize) {
       if (skipLargeFiles) {
         this.log(`  ⊘ Skipping ${file.name}: exceeds ${this.formatBytes(maxFileSize)}`);
@@ -395,7 +401,7 @@ class WebpackS3AssetsPlugin {
       }
       throw new Error(`File exceeds maximum size of ${this.formatBytes(maxFileSize)}`);
     }
-    
+
     if (skipExistingFiles) {
       const localMD5 = this.getContentMD5(file.content);
       const exists = await this.checkFileExists(key, localMD5);
@@ -407,7 +413,7 @@ class WebpackS3AssetsPlugin {
     }
 
     const contentType = mime.lookup(file.name) || 'application/octet-stream';
-    
+
     const uploadParams = {
       ...this.options.s3UploadOptions,
       Key: key,
@@ -454,7 +460,7 @@ class WebpackS3AssetsPlugin {
   async uploadLargeFile(file) {
     const { retries, retryDelay, maxFileSize, skipLargeFiles, skipExistingFiles, partSize } = this.options;
     const key = this.getS3Key(file.name);
-    
+
     if (file.size > maxFileSize) {
       if (skipLargeFiles) {
         console.log(`  ⊘ Skipping ${file.name}: exceeds ${this.formatBytes(maxFileSize)}`);
@@ -476,7 +482,7 @@ class WebpackS3AssetsPlugin {
     }
 
     const contentType = mime.lookup(file.name) || 'application/octet-stream';
-    
+
     console.log(`\n  🎬 Multipart Upload: ${file.name} (${this.formatBytes(file.size)})`);
 
     let uploadId = null;
@@ -484,35 +490,35 @@ class WebpackS3AssetsPlugin {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         this.log(`  Multipart upload attempt ${attempt + 1}/${retries + 1}`);
-        
+
         // Step 1: Create multipart upload
         const createCommand = new CreateMultipartUploadCommand({
           ...this.options.s3UploadOptions,
           Key: key,
           ContentType: contentType
         });
-        
+
         const createResponse = await withTimeout(
           this.s3Client.send(createCommand),
           30000,
           'CreateMultipartUpload timeout'
         );
-        
+
         uploadId = createResponse.UploadId;
         this.log(`  Created multipart upload: ${uploadId}`);
-        
+
         // Step 2: Upload parts
         const numParts = Math.ceil(file.size / partSize);
         const parts = [];
         let uploadedBytes = 0;
-        
+
         for (let partNumber = 1; partNumber <= numParts; partNumber++) {
           const start = (partNumber - 1) * partSize;
           const end = Math.min(start + partSize, file.size);
           const partBuffer = file.content.slice(start, end);
-          
+
           this.log(`  Uploading part ${partNumber}/${numParts} (${this.formatBytes(partBuffer.length)})`);
-          
+
           const uploadPartCommand = new UploadPartCommand({
             ...this.options.s3UploadOptions,
             Key: key,
@@ -520,50 +526,49 @@ class WebpackS3AssetsPlugin {
             PartNumber: partNumber,
             Body: partBuffer
           });
-          
+
           const uploadPartResponse = await withTimeout(
             this.s3Client.send(uploadPartCommand),
             this.options.timeout * 2,
             `UploadPart timeout for part ${partNumber}`
           );
-          
+
           parts.push({
             PartNumber: partNumber,
             ETag: uploadPartResponse.ETag
           });
-          
+
           uploadedBytes += partBuffer.length;
           const percent = Math.round((uploadedBytes / file.size) * 100);
-          
+
           // Show progress every 10%
           if (partNumber === numParts || percent % 10 === 0) {
             console.log(`  📤 ${file.name}: ${percent}% (${this.formatBytes(uploadedBytes)}/${this.formatBytes(file.size)})`);
           }
-          
+
           if (this.rateLimiter) {
             await this.rateLimiter.consume(partBuffer.length);
           }
         }
-        
+
         // Step 3: Complete multipart upload
         this.log(`  Completing multipart upload: ${uploadId}`);
-        
+
         const completeCommand = new CompleteMultipartUploadCommand({
           ...this.options.s3UploadOptions,
           Key: key,
           UploadId: uploadId,
           MultipartUpload: { Parts: parts }
         });
-        
+
         await withTimeout(
           this.s3Client.send(completeCommand),
           60000,
           'CompleteMultipartUpload timeout'
         );
-        
+
         console.log(`  ✅ Multipart upload completed: ${file.name}`);
         return;
-        
       } catch (error) {
         // Abort multipart upload on error
         if (uploadId) {
@@ -578,7 +583,7 @@ class WebpackS3AssetsPlugin {
             this.log(`  Failed to abort multipart upload: ${abortError.message}`);
           }
         }
-        
+
         if (attempt === retries) {
           console.error(`  ❌ Multipart upload failed for ${file.name} after ${retries + 1} attempts: ${error.message}`);
           this.failedUploads.push({
@@ -590,8 +595,8 @@ class WebpackS3AssetsPlugin {
         }
 
         console.warn(`  ⚠️  Multipart upload attempt ${attempt + 1}/${retries + 1} failed for ${file.name}: ${error.message}. Retrying...`);
-        
-        const delay = retryDelay * Math.pow(2, attempt) + Math.random() * 1000;
+
+        const delay = (retryDelay * Math.pow(2, attempt)) + (Math.random() * 1000);
         await this.sleep(delay);
       }
     }
@@ -600,9 +605,9 @@ class WebpackS3AssetsPlugin {
   getAssets(compilation, assets) {
     const result = [];
     const assetNames = Object.keys(assets);
-    
+
     this.log(`Found ${assetNames.length} assets`);
-    
+
     for (const name of assetNames) {
       if (this.options.exclude && this.matchRule(name, this.options.exclude)) {
         this.log(`Excluded: ${name}`);
@@ -614,7 +619,7 @@ class WebpackS3AssetsPlugin {
 
       try {
         let source;
-        
+
         if (compilation.getAsset) {
           const assetInfo = compilation.getAsset(name);
           if (!assetInfo || !assetInfo.source) {
@@ -628,7 +633,7 @@ class WebpackS3AssetsPlugin {
           }
           source = asset.source();
         }
-        
+
         let buffer;
         if (Buffer.isBuffer(source)) {
           buffer = source;
@@ -640,7 +645,7 @@ class WebpackS3AssetsPlugin {
           this.log(`Skipping ${name}: unsupported source type`, typeof source);
           continue;
         }
-        
+
         result.push({
           name,
           content: buffer,
@@ -651,12 +656,14 @@ class WebpackS3AssetsPlugin {
         continue;
       }
     }
-    
+
     return result;
   }
 
   formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {
+      return '0 B';
+    }
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));

@@ -141,11 +141,11 @@ describe('Plugin Compatibility', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        
+
         // 檢查 HTML 文件是否被創建
         const htmlPath = path.join(tempDir, 'dist', 'index.html');
         expect(fs.existsSync(htmlPath)).toBe(true);
-        
+
         compiler.close(() => {
           done();
         });
@@ -184,7 +184,7 @@ describe('Plugin Compatibility', () => {
         expect(stats.hasErrors()).toBe(false);
         // 應該有進度日誌
         expect(progressLogs.length).toBeGreaterThan(0);
-        
+
         compiler.close(() => {
           done();
         });
@@ -229,11 +229,11 @@ describe('Plugin Compatibility', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        
+
         // 檢查複製的文件是否存在
         const robotsPath = path.join(tempDir, 'dist', 'public', 'robots.txt');
         expect(fs.existsSync(robotsPath)).toBe(true);
-        
+
         compiler.close(() => {
           done();
         });
@@ -259,7 +259,7 @@ describe('Plugin Compatibility', () => {
         plugins: [
           new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify('production'),
-            'VERSION': JSON.stringify('1.0.0')
+            VERSION: JSON.stringify('1.0.0')
           }),
           new WebpackS3AssetsPlugin({
             s3Options: { region: 'us-east-1' },
@@ -273,12 +273,12 @@ describe('Plugin Compatibility', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        
+
         // 檢查生成的代碼中是否包含定義的值
         const bundlePath = path.join(tempDir, 'dist', 'bundle.js');
         const content = fs.readFileSync(bundlePath, 'utf-8');
         expect(content).toContain('1.0.0');
-        
+
         compiler.close(() => {
           done();
         });
@@ -290,7 +290,7 @@ describe('Plugin Compatibility', () => {
     it('should work with MiniCssExtractPlugin', (done) => {
       const entryFile = path.join(tempDir, 'entry.js');
       const cssFile = path.join(tempDir, 'styles.css');
-      
+
       fs.writeFileSync(entryFile, 'import "./styles.css"; console.log("loaded");');
       fs.writeFileSync(cssFile, 'body { background: red; }');
 
@@ -326,12 +326,12 @@ describe('Plugin Compatibility', () => {
 
       compiler.run((err, stats) => {
         expect(err).toBeNull();
-        
+
         // 檢查 CSS 文件是否被創建
         const cssOutputPath = path.join(tempDir, 'dist', 'main.css');
         // 注意：由於 css-loader 和 MiniCssExtractPlugin 可能沒有安裝，這個測試可能會失敗
         // 但我們主要檢查不會導致構建崩潰
-        
+
         compiler.close(() => {
           done();
         });
@@ -375,14 +375,14 @@ describe('Plugin Compatibility', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        
+
         // 檢查 manifest 文件是否被創建
         const manifestPath = path.join(tempDir, 'dist', 'manifest.json');
         expect(fs.existsSync(manifestPath)).toBe(true);
-        
+
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
         expect(Object.keys(manifest).length).toBeGreaterThan(0);
-        
+
         compiler.close(() => {
           done();
         });
@@ -399,7 +399,7 @@ describe('Plugin Compatibility', () => {
       `);
 
       const HtmlWebpackPlugin = require('html-webpack-plugin');
-      
+
       // 嘗試加載 WebpackManifestPlugin，失敗則跳過
       let WebpackManifestPlugin;
       let useManifestPlugin = false;
@@ -443,16 +443,16 @@ describe('Plugin Compatibility', () => {
       compiler.run((err, stats) => {
         expect(err).toBeNull();
         expect(stats.hasErrors()).toBe(false);
-        
+
         // 檢查所有插件的輸出
         const htmlPath = path.join(tempDir, 'dist', 'index.html');
         expect(fs.existsSync(htmlPath)).toBe(true);
-        
+
         if (useManifestPlugin) {
           const manifestPath = path.join(tempDir, 'dist', 'manifest.json');
           expect(fs.existsSync(manifestPath)).toBe(true);
         }
-        
+
         compiler.close(() => {
           done();
         });

@@ -79,7 +79,7 @@ describe('Edge Cases and Error Handling', () => {
   describe('File Size Boundaries', () => {
     it('should handle exactly multipart threshold size', () => {
       plugin.options.multipartThreshold = 1024;
-      
+
       const content = Buffer.alloc(1024); // Exactly 1KB
       const isLarge = content.length >= plugin.options.multipartThreshold;
 
@@ -88,7 +88,7 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle file just below multipart threshold', () => {
       plugin.options.multipartThreshold = 1024;
-      
+
       const content = Buffer.alloc(1023); // Just under 1KB
       const isLarge = content.length >= plugin.options.multipartThreshold;
 
@@ -97,7 +97,7 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle extremely large files', () => {
       plugin.options.maxFileSize = 5 * 1024 * 1024 * 1024; // 5GB
-      
+
       const file = {
         name: 'huge.zip',
         content: Buffer.alloc(100 * 1024 * 1024), // 100MB
@@ -160,7 +160,7 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle complex regex patterns', () => {
       const pattern = /^(?!.*\.map$).*\.(js|css)$/; // JS or CSS, but not .map
-      
+
       expect(plugin.matchRule('bundle.js', pattern)).toBe(true);
       expect(plugin.matchRule('bundle.js.map', pattern)).toBe(false);
       expect(plugin.matchRule('styles.css', pattern)).toBe(true);
@@ -177,7 +177,7 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle regex that matches everything', () => {
       const pattern = /.*/;
-      
+
       expect(plugin.matchRule('', pattern)).toBe(true);
       expect(plugin.matchRule('anything', pattern)).toBe(true);
     });
@@ -370,7 +370,7 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should not leak memory with progress bar', async () => {
       plugin.options.progress = true;
-      
+
       // Simulate multiple upload cycles
       for (let i = 0; i < 10; i++) {
         plugin.progressBar = { start: jest.fn(), update: jest.fn(), stop: jest.fn() };
