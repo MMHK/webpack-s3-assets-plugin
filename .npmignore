@@ -47,3 +47,11 @@ build/
 
 # Documentation (published to npm, but not needed in package)
 # README.md and CHANGELOG.md should be included
+
+# Config files
+.eslintrc.json
+jest.config.js
+*.html
+
+# Test directory
+__tests__/
